@@ -74,7 +74,7 @@ public class SortingComponent extends JComponent {
         this.repaint();
 
         // Play sound based on the current element
-        int note = current / 2;
+        int note = current / 3;
         channels[channel].noteOn(note, volume);
         try {
             Thread.sleep(1); // Adjust duration as needed
