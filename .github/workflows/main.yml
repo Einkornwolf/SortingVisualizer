@@ -21,14 +21,16 @@ jobs:
       with:
         java-version: '11'
 
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Compile Java source files
+      run: javac -d out src/**/*.java
 
     - name: Package JAR
-      run: ./gradlew jar
-
+      run: |
+        mkdir -p build/libs
+        jar cf build/libs/my-app.jar -C out .
+    
     - name: Upload JAR
       uses: actions/upload-artifact@v2
       with:
         name: my-app
-        path: build/libs/*.jar
+        path: build/libs/my-app.jar
