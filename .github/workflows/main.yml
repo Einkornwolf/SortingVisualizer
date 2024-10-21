@@ -23,7 +23,11 @@ jobs:
         distribution: 'temurin'
 
     - name: Compile Java source files
-      run: javac -d out $(find src -name "*.java")
+      run: |
+        $files = Get-ChildItem -Path src -Recurse -Filter *.java
+        if ($files.Count -eq 0) { throw "No source files found" }
+        javac -d out $files.FullName
+      shell: pwsh
 
     - name: Package JAR
       run: |
