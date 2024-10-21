@@ -34,4 +34,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: my-app
-        path: build/libs/my-app.jar
+        path: build/libs/SortingVisualizer.jar
