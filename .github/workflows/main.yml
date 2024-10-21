@@ -24,7 +24,8 @@ jobs:
 
     - name: Install jpackage
       run: |
-        choco install jdk11 --version=11.0.10
+        choco install jdk11 --version=11.0.11
+        Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
         refreshenv
 
     - name: Compile Java source files
