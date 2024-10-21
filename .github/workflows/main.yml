@@ -23,7 +23,7 @@ jobs:
         distribution: 'temurin'
 
     - name: Compile Java source files
-      run: javac -d out src/**/*.java
+      run: javac -d out $(find src -name "*.java")
 
     - name: Package JAR
       run: |
