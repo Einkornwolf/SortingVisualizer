@@ -1,4 +1,4 @@
-name: Build JAR
+name: Build EXE
 
 on:
   push:
@@ -30,8 +30,12 @@ jobs:
         mkdir -p build/libs
         jar cf build/libs/my-app.jar -C out .
 
-    - name: Upload JAR
+    - name: Create EXE
+      run: |
+        jpackage --input build/libs --main-jar my-app.jar --name MyApp --type exe --dest build/exe
+
+    - name: Upload EXE
       uses: actions/upload-artifact@v3
       with:
-        name: my-app
-        path: build/libs/SortingVisualizer.jar
+        name: my-app-exe
+        path: build/exe/MyApp.exe
