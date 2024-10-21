@@ -16,11 +16,17 @@ jobs:
     - name: Check out repository
       uses: actions/checkout@v2
 
-    - name: Set up JDK 11
+    - name: Set up JDK 11 with jpackage
       uses: actions/setup-java@v2
       with:
         java-version: '11'
         distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Install jpackage
+      run: |
+        choco install jdk11 --version=11.0.10
+        refreshenv
 
     - name: Compile Java source files
       run: |
