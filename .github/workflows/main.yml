@@ -28,9 +28,9 @@ jobs:
       run: |
         mkdir -p build/libs
         jar cf build/libs/my-app.jar -C out .
-    
+
     - name: Upload JAR
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: my-app
         path: build/libs/my-app.jar
