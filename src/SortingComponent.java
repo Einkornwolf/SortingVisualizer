@@ -39,11 +39,6 @@ public class SortingComponent extends JComponent {
     }
 
     @Override
-    public Dimension getPreferredSize() {
-        return new Dimension(width, height);
-    }
-
-    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
