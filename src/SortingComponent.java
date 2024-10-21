@@ -14,9 +14,12 @@ public class SortingComponent extends JComponent {
     public int volume = 75;
     MidiChannel[] channels = null;
     Synthesizer synth = null;
+    int speed = 50;
     int current;
-    private int[] array;
-    public AtomicReference<Thread> sorterThread = new AtomicReference<>();
+    public int[] array;
+    public AtomicReference<Thread> sorterThread;
+    private Timer timer;
+
     public SortingComponent(int width, int height, int[] array, AtomicReference<Thread> sorterThread) {
         this.width = width;
         this.height = height;
@@ -30,11 +33,18 @@ public class SortingComponent extends JComponent {
         } catch (MidiUnavailableException e) {
             throw new RuntimeException(e);
         }
+
+        timer = new Timer(speed, e -> repaint());
+        timer.start();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(width, height);
     }
 
     @Override
     protected void paintComponent(Graphics g) {
-
         super.paintComponent(g);
 
         RenderingHints rh = new RenderingHints(
@@ -42,46 +52,82 @@ public class SortingComponent extends JComponent {
                 RenderingHints.VALUE_ANTIALIAS_ON);
 
         Graphics2D g2d = (Graphics2D) g;
-
         g2d.setRenderingHints(rh);
 
+        int maxValue = 0;
+        for (int value : this.array) {
+            if (value > maxValue) {
+                maxValue = value;
+            }
+        }
 
+        double margin = getWidth() / 8.0;
+        double rectWidth = (getWidth() - 2 * margin) / this.array.length;
+        double startX = margin;
 
-
-        //Add lines to screen
         for (int i = 0; i < this.array.length; i++) {
-            Rectangle2D.Double component = new Rectangle2D.Double((((double) this.width / (array.length + 50)) * 25) + (i*10), this.height - this.array[i], (double) this.width / (array.length + 50), this.array[i]);
+            double scaledHeight = ((double) this.array[i] / maxValue) * getHeight();
+            Rectangle2D component = new Rectangle2D.Double(
+                    startX + i * rectWidth,
+                    getHeight() - scaledHeight,
+                    rectWidth,
+                    scaledHeight);
+
             g2d.setColor(Color.RED);
             g2d.fill(component);
 
-            int note = (int) (this.array[i] / 2.5);
-
-            if(i == current) {
+            if (i == current) {
                 g2d.setColor(Color.BLUE);
                 g2d.fill(component);
             }
         }
     }
 
-    public void updateComponents(int[] array, int current) {
+    // Add this method to calculate the frequency based on the height
+    private double calculateFrequency(int value, int maxValue) {
+        double minFrequency = 50.0; // Minimum frequency in Hz
+        double maxFrequency = 450.0; // Maximum frequency in Hz
+        return minFrequency + ((double) value / maxValue) * (maxFrequency - minFrequency);
+    }
 
-        if(sorterThread.get() != null && sorterThread.get().isInterrupted()) {
+    // Add this method to set the MIDI instrument to a synth
+    private void setSynthInstrument(MidiChannel channel) {
+        int synthInstrument = 82; // Synth instrument (Lead 1 (square))
+        channel.programChange(synthInstrument);
+    }
+
+    // Update the updateComponents method
+    public void updateComponents(int[] array, int current) {
+        if (sorterThread.get() != null && sorterThread.get().isInterrupted()) {
             return;
         }
 
         this.current = current;
         this.array = array;
-        this.repaint();
 
-        // Play sound based on the current element
-        int note = current / 3;
+        // Calculate the frequency based on the current element's height
+        int maxValue = 0;
+        for (int value : this.array) {
+            if (value > maxValue) {
+                maxValue = value;
+            }
+        }
+        double frequency = calculateFrequency(array[current], maxValue);
+
+        // Play sound based on the calculated frequency
+        int note = (int) (69 + 12 * Math.log(frequency / 440.0) / Math.log(2)); // Convert frequency to MIDI note
+        setSynthInstrument(channels[channel]); // Set the instrument to synth
         channels[channel].noteOn(note, volume);
         try {
-            Thread.sleep(1); // Adjust duration as needed
+            Thread.sleep(speed); // Adjust duration as needed
         } catch (InterruptedException e) {
             return;
         }
         channels[channel].noteOff(note);
     }
 
+    public void setSpeed(int speed) {
+        this.speed = speed;
+        timer.setDelay(Math.max(speed, 1));
+    }
 }

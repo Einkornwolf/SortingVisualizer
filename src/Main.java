@@ -1,6 +1,8 @@
 // Main.java
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
@@ -14,12 +16,12 @@ public class Main {
         JFrame frame = new JFrame();
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        int[] array = new int[200];
-        for (int i = 0; i < array.length; i++) {
-            array[i] = i * 7;
+        final int[][] array = {new int[100]};
+        for (int i = 0; i < array[0].length; i++) {
+            array[0][i] = i * 7;
         }
 
-        SortingComponent sortingComponent = new SortingComponent(screenSize.width, screenSize.height, array, sorterThread);
+        SortingComponent sortingComponent = new SortingComponent(screenSize.width, screenSize.height, array[0], sorterThread);
 
         // Create Controls
         JPanel controlPanel = new JPanel();
@@ -76,6 +78,53 @@ public class Main {
             System.exit(0);
         });
 
+        //Create amount of items slider
+        JSlider jSlider2 = new JSlider(JSlider.HORIZONTAL);
+        jSlider2.setBackground(Color.BLACK);
+        jSlider2.setForeground(Color.WHITE);
+        jSlider2.setOpaque(true);
+        // paint the ticks and tracks
+        jSlider2.setPaintTrack(true);
+        jSlider2.setPaintTicks(true);
+        jSlider2.setPaintLabels(true);
+
+        // set spacing
+        jSlider2.setMajorTickSpacing(250);
+        jSlider2.setMinorTickSpacing(250);
+        jSlider2.setMaximum(5);
+        jSlider2.setMaximum(1000);
+        // Update the amount of items slider change listener
+        jSlider2.addChangeListener(e -> {
+            int newSize = jSlider2.getValue();
+            int[] newArray = new int[newSize];
+            for (int i = 0; i < newSize; i++) {
+                newArray[i] = i * 7; // or any other logic to initialize the array
+            }
+            sortingComponent.array = newArray;
+            sortingComponent.repaint();
+        });
+
+        //Sorting Speed Slider
+        JSlider jSlider3 = new JSlider(JSlider.HORIZONTAL);
+        jSlider3.setBackground(Color.BLACK);
+        jSlider3.setForeground(Color.WHITE);
+        jSlider3.setOpaque(true);
+        // paint the ticks and tracks
+        jSlider3.setPaintTrack(true);
+        jSlider3.setPaintTicks(true);
+        jSlider3.setPaintLabels(true);
+        
+        // set spacing
+        jSlider3.setMajorTickSpacing(10);
+        jSlider3.setMinorTickSpacing(10);
+        jSlider3.setMaximum(100);
+        jSlider3.setValue(1);
+        jSlider3.addChangeListener(e -> {
+            int sliderValue = jSlider3.getValue();
+            int newSpeed = (int) (10 / (Math.log(sliderValue + 1) + 1)); // Further adjusted inverse logarithmic speed calculation for higher speeds
+            sortingComponent.setSpeed(newSpeed);
+        });
+        
         //Stop Current Sort Button
         JButton stopSortButton = new JButton("Stop Sorting");
         stopSortButton.setBackground(Color.BLACK);
@@ -92,13 +141,23 @@ public class Main {
                 }
             }
 
+            jSlider2.setEnabled(true);
+
         });
 
         //Create Volume Slider
-        JSlider jSlider = new JSlider(JSlider.VERTICAL);
+        JSlider jSlider = new JSlider(JSlider.HORIZONTAL);
         jSlider.setBackground(Color.BLACK);
         jSlider.setForeground(Color.WHITE);
         jSlider.setOpaque(true);
+        // paint the ticks and tracks
+        jSlider.setPaintTrack(true);
+        jSlider.setPaintTicks(true);
+        jSlider.setPaintLabels(true);
+
+        // set spacing
+        jSlider.setMajorTickSpacing(10);
+        jSlider.setMinorTickSpacing(10);
         jSlider.addChangeListener(e -> {
             sortingComponent.volume = jSlider.getValue();
         });
@@ -108,6 +167,15 @@ public class Main {
         volume.setBackground(Color.BLACK);
         volume.setForeground(Color.WHITE);
         volume.setOpaque(true);
+
+        frame.setResizable(true);
+        frame.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                sortingComponent.setSize(frame.getSize());
+                sortingComponent.repaint();
+            }
+        });
 
 
         //Start Button
@@ -119,17 +187,22 @@ public class Main {
         startButton.setContentAreaFilled(false);
         startButton.setOpaque(true);
         startButton.addActionListener(e -> {
+
+            jSlider2.setEnabled(false);
+
+            array[0] = sortingComponent.array;
+
              sorterThread.set(new Thread(() -> {
 
                  // Randomize Array
-                 for (int i = 0; i < array.length; i++) {
-                     int randomIndexToSwap = (int) (Math.random() * array.length);
-                     int temp = array[randomIndexToSwap];
-                     array[randomIndexToSwap] = array[i];
-                     array[i] = temp;
+                 for (int i = 0; i < array[0].length; i++) {
+                     int randomIndexToSwap = (int) (Math.random() * array[0].length);
+                     int temp = array[0][randomIndexToSwap];
+                     array[0][randomIndexToSwap] = array[0][i];
+                     array[0][i] = temp;
                  }
 
-                 sortingComponent.updateComponents(array, 0);
+                 sortingComponent.updateComponents(array[0], 0);
 
                  // Get Sorting Type
                  String currentSort = (String) selector.getSelectedItem();
@@ -137,101 +210,99 @@ public class Main {
                  // Switch
                  switch (currentSort) {
                      case "Bubble Sort":
-                         bubbleSort(array, sortingComponent);
+                         bubbleSort(array[0], sortingComponent);
                          break;
                      case "Selection Sort":
-                         selectionSort(array, sortingComponent);
+                         selectionSort(array[0], sortingComponent);
                          break;
                      case "Insertion Sort":
-                         insertionSort(array, sortingComponent);
+                         insertionSort(array[0], sortingComponent);
                          break;
                      case "Bogo Sort":
-                         bogoSort(array, sortingComponent);
+                         bogoSort(array[0], sortingComponent);
                          break;
                      case "Quick Sort":
-                         quickSort(array, 0, array.length - 1, sortingComponent);
+                         quickSort(array[0], 0, array[0].length - 1, sortingComponent);
                          break;
                      case "Miracle Sort":
-                         miracleSort(array, sortingComponent);
+                         miracleSort(array[0], sortingComponent);
                          break;
                      case "Bozo Sort":
-                         bozoSort(array, sortingComponent);
+                         bozoSort(array[0], sortingComponent);
                          break;
                      case "Stooge Sort":
-                         stoogeSort(array, 0, array.length - 1, sortingComponent);
+                         stoogeSort(array[0], 0, array[0].length - 1, sortingComponent);
                          break;
                      case "Merge Sort":
-                         mergeSort(array, 0, array.length - 1, sortingComponent);
+                         mergeSort(array[0], 0, array[0].length - 1, sortingComponent);
                          break;
                      case "Heap Sort":
-                         heapSort(array, sortingComponent);
+                         heapSort(array[0], sortingComponent);
                          break;
                      case "Radix Sort":
-                         radixSort(array, sortingComponent);
+                         radixSort(array[0], sortingComponent);
                          break;
                      case "Shell Sort":
-                         shellSort(array, sortingComponent);
+                         shellSort(array[0], sortingComponent);
                          break;
                      case "Cocktail Sort":
-                         cocktailSort(array, sortingComponent);
+                         cocktailSort(array[0], sortingComponent);
                          break;
                      case "Gnome Sort":
-                         gnomeSort(array, sortingComponent);
+                         gnomeSort(array[0], sortingComponent);
                          break;
                      case "Comb Sort":
-                         combSort(array, sortingComponent);
+                         combSort(array[0], sortingComponent);
                          break;
                      case "Pigeonhole Sort":
-                         pigeonholeSort(array, sortingComponent);
+                         pigeonholeSort(array[0], sortingComponent);
                          break;
                      case "Risk Sort":
-                         riskSort(array, sortingComponent);
+                         riskSort(array[0], sortingComponent);
                          break;
                      case "Intro Sort":
-                         introSort(array, 0, array.length - 1, (int) (2 * Math.floor(Math.log(array.length) / Math.log(2))), sortingComponent);
+                         introSort(array[0], 0, array[0].length - 1, (int) (2 * Math.floor(Math.log(array[0].length) / Math.log(2))), sortingComponent);
                          break;
                      case "Cycle Sort":
-                         cycleSort(array, sortingComponent);
+                         cycleSort(array[0], sortingComponent);
                          break;
                      case "Block Sort":
-                         blockSort(array, sortingComponent);
+                         blockSort(array[0], sortingComponent);
                          break;
                      case "Bucket Sort":
-                         bucketSort(array, sortingComponent);
+                         bucketSort(array[0], sortingComponent);
                          break;
                      case "Flash Sort":
-                         flashSort(array, sortingComponent);
+                         flashSort(array[0], sortingComponent);
                          break;
                      case "Spread Sort":
-                         spreadSort(array, sortingComponent);
+                         spreadSort(array[0], sortingComponent);
                          break;
                      case "Tournament Sort":
-                         tournamentSort(array, sortingComponent);
+                         tournamentSort(array[0], sortingComponent);
                          break;
                      case "Patience Sort":
-                         patienceSort(array, sortingComponent);
+                         patienceSort(array[0], sortingComponent);
                          break;
                      case "Strand Sort":
-                         strandSort(array, sortingComponent);
+                         strandSort(array[0], sortingComponent);
                          break;
                      case "Bitonic Sort":
-                         bitonicSort(array, sortingComponent);
+                         bitonicSort(array[0], sortingComponent);
                          break;
                      case "Pancake Sort":
-                         pancakeSort(array, sortingComponent);
+                         pancakeSort(array[0], sortingComponent);
                          break;
                  }
 
                  //Go through the array and play the notes
-                 for (int i = 0; i < array.length; i++) {
-                     array[i] = i * 7;
-                     sortingComponent.updateComponents(array, i);
-                     try {
-                         Thread.sleep(1);
-                     } catch (InterruptedException ex) {
+                 for (int i = 0; i < array[0].length; i++) {
+                     array[0][i] = i * 7;
+                     sortingComponent.updateComponents(array[0], i);
 
-                     }
                  }
+
+                    jSlider2.setEnabled(true);
 
              }));
 
@@ -251,10 +322,11 @@ public class Main {
         controlPanel.add(stopButton);
         controlPanel.add(volume);
         controlPanel.add(jSlider);
+        controlPanel.add(jSlider2);
+        controlPanel.add(jSlider3);
         frame.add(sortingComponent);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setResizable(false);
         frame.setVisible(true);
     }
 
@@ -265,19 +337,11 @@ public class Main {
                 flip(array, maxIndex);
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, maxIndex);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
                 flip(array, i - 1);
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, i - 1);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
             }
         }
     }
@@ -326,11 +390,7 @@ public class Main {
                     array[i + k] = temp;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, i);
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+
                 }
             }
             bitonicMerge(array, low, k, dir, sortingComponent);
@@ -378,11 +438,7 @@ public class Main {
                 array[k] = sorted.get(k);
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, k);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
             }
         }
     }
@@ -404,11 +460,7 @@ public class Main {
             piles.get(pile).push(card);
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
         }
 
         int index = 0;
@@ -420,11 +472,7 @@ public class Main {
             array[index++] = smallestPile.pop();
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, index - 1);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+
             if (!smallestPile.isEmpty()) {
                 heap.add(smallestPile);
             }
@@ -463,11 +511,7 @@ public class Main {
             array[i] = tree[0];
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
             tree[n + index[0] - 1] = Integer.MIN_VALUE;
             int k = n + index[0] - 1;
             while (k > 0) {
@@ -498,11 +542,7 @@ public class Main {
                 L[i]--;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, index);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
                 index++;
             }
         }
@@ -526,11 +566,7 @@ public class Main {
             array[index] = buffer[k];
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, index);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
     }
 
@@ -555,11 +591,7 @@ public class Main {
                 array[index] = bucket[j];
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, index);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
                 index++;
             }
         }
@@ -586,11 +618,7 @@ public class Main {
                 array[index] = bucket[j];
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, index);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
                 index++;
             }
         }
@@ -627,11 +655,7 @@ public class Main {
                 writes++;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, pos);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
             }
             while (pos != cycleStart) {
                 pos = cycleStart;
@@ -650,11 +674,7 @@ public class Main {
                     writes++;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, pos);
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                 }
             }
         }
@@ -685,11 +705,7 @@ public class Main {
                 array[i] = temp;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, i);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
             }
         }
     }
@@ -718,11 +734,7 @@ public class Main {
                 array[index] = i + min;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, index);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
                 index++;
             }
         }
@@ -737,11 +749,7 @@ public class Main {
                     array[j + 1] = temp;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, j);
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                 }
             }
         }
@@ -760,11 +768,7 @@ public class Main {
             array[i] = temp;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
     }
 
@@ -777,11 +781,7 @@ public class Main {
                 j = j - 1;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, j);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
             }
             array[j + 1] = key;
         }
@@ -794,13 +794,9 @@ public class Main {
                     int temp = array[randomIndexToSwap];
                     array[randomIndexToSwap] = array[i];
                     array[i] = temp;
-                    try {
-                        if(sortingComponent.sorterThread.get().isInterrupted()) return;
-                        sortingComponent.updateComponents(array, i);
-                        Thread.sleep(0, 0);
-                    } catch (InterruptedException interruptedException) {
-                        return;
-                    }
+                    if(sortingComponent.sorterThread.get().isInterrupted()) return;
+                    sortingComponent.updateComponents(array, i);
+
                 }
             }
     }
@@ -824,11 +820,7 @@ public class Main {
                 array[j] = temp;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return 0;
                 sortingComponent.updateComponents(array, j);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
             }
         }
         int temp = array[i + 1];
@@ -836,22 +828,14 @@ public class Main {
         array[high] = temp;
         if(sortingComponent.sorterThread.get().isInterrupted()) return 0;
         sortingComponent.updateComponents(array, high);
-        try {
-            Thread.sleep(5);
-        } catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
-        }
+
         return i + 1;
     }
 
     private static void miracleSort(int[] array, SortingComponent sortingComponent) {
         while (!isSorted(array)) {
-            try {
-                sortingComponent.updateComponents(array, 0);
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+            sortingComponent.updateComponents(array, 0);
+
         }
     }
 
@@ -861,13 +845,9 @@ public class Main {
             int temp = array[randomIndexToSwap];
             array[randomIndexToSwap] = array[0];
             array[0] = temp;
-            try {
-                if(sortingComponent.sorterThread.get().isInterrupted()) return;
-                sortingComponent.updateComponents(array, 0);
-                Thread.sleep(0, 0);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+            if(sortingComponent.sorterThread.get().isInterrupted()) return;
+            sortingComponent.updateComponents(array, 0);
+
         }
     }
 
@@ -878,11 +858,7 @@ public class Main {
             array[i1] = temp;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
         if (i + 1 >= i1) {
             return;
@@ -928,11 +904,7 @@ public class Main {
             }
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, k);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
             k++;
         }
 
@@ -942,11 +914,7 @@ public class Main {
             k++;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, k);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
 
         while (y < n2) {
@@ -955,11 +923,7 @@ public class Main {
             k++;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, k);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
     }
 
@@ -973,11 +937,7 @@ public class Main {
             array[i] = temp;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
             heapify(array, i, 0, sortingComponent);
         }
     }
@@ -1001,11 +961,7 @@ public class Main {
             array[largest] = swap;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
             heapify(array, length, largest, sortingComponent);
         }
     }
@@ -1034,11 +990,7 @@ public class Main {
             array[i] = output[i];
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException interruptedException) {
-                interruptedException.printStackTrace();
-            }
+
         }
     }
 
@@ -1061,11 +1013,7 @@ public class Main {
                     array[j] = array[j - gap];
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, j);
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                 }
                 array[j] = temp;
             }
@@ -1085,11 +1033,7 @@ public class Main {
                     array[i + 1] = temp;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, i);
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                     swapped = true;
                 }
             }
@@ -1105,11 +1049,7 @@ public class Main {
                     array[i + 1] = temp;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, i);
-                    try {
-                        Thread.sleep(1);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                     swapped = true;
                 }
             }
@@ -1131,11 +1071,7 @@ public class Main {
                 array[index - 1] = temp;
                 if(sortingComponent.sorterThread.get().isInterrupted()) return;
                 sortingComponent.updateComponents(array, index);
-                try {
-                    Thread.sleep(5);
-                } catch (InterruptedException interruptedException) {
-                    interruptedException.printStackTrace();
-                }
+
                 index--;
             }
         }
@@ -1154,11 +1090,7 @@ public class Main {
                     array[i + gap] = temp;
                     if(sortingComponent.sorterThread.get().isInterrupted()) return;
                     sortingComponent.updateComponents(array, i);
-                    try {
-                        Thread.sleep(5);
-                    } catch (InterruptedException interruptedException) {
-                        interruptedException.printStackTrace();
-                    }
+
                     swapped = true;
                 }
             }
