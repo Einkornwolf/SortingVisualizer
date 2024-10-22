@@ -3,7 +3,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,7 +20,7 @@ public class Main {
             array[0][i] = i * 7;
         }
 
-        SortingComponent sortingComponent = new SortingComponent(screenSize.width, screenSize.height, array[0], sorterThread);
+        SortingComponent sortingComponent = new SortingComponent(array[0], sorterThread);
 
         // Create Controls
         JPanel controlPanel = new JPanel();
@@ -696,18 +695,15 @@ public class Main {
     }
 
     private static void riskSort(int[] array, SortingComponent sortingComponent) {
-        //Try to sort the array randomly if it fails end the program
-        while (!isSorted(array)) {
-            for (int i = 0; i < array.length; i++) {
-                int randomIndexToSwap = (int) (Math.random() * array.length);
-                int temp = array[randomIndexToSwap];
-                array[randomIndexToSwap] = array[i];
-                array[i] = temp;
-                if(sortingComponent.sorterThread.get().isInterrupted()) return;
-                sortingComponent.updateComponents(array, i);
-
-            }
+        //Shuffle array 1 time
+        for (int i = 0; i < array.length; i++) {
+            int randomIndexToSwap = (int) (Math.random() * array.length);
+            int temp = array[randomIndexToSwap];
+            array[randomIndexToSwap] = array[i];
+            array[i] = temp;
         }
+
+        if(!isSorted(array)) System.exit(3);
     }
 
     private static boolean isSorted(int[] array) {
@@ -784,6 +780,9 @@ public class Main {
 
             }
             array[j + 1] = key;
+            if(sortingComponent.sorterThread.get().isInterrupted()) return;
+            sortingComponent.updateComponents(array, j + 1);
+
         }
     }
 

@@ -8,8 +8,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SortingComponent extends JComponent {
-    private final int width;
-    private final int height;
     int channel = 1;
     public int volume = 75;
     MidiChannel[] channels = null;
@@ -18,11 +16,9 @@ public class SortingComponent extends JComponent {
     int current;
     public int[] array;
     public AtomicReference<Thread> sorterThread;
-    private Timer timer;
+    private final Timer timer;
 
-    public SortingComponent(int width, int height, int[] array, AtomicReference<Thread> sorterThread) {
-        this.width = width;
-        this.height = height;
+    public SortingComponent(int[] array, AtomicReference<Thread> sorterThread) {
         this.array = array;
         this.sorterThread = sorterThread;
 
@@ -107,7 +103,7 @@ public class SortingComponent extends JComponent {
                 maxValue = value;
             }
         }
-        double frequency = calculateFrequency(array[current], maxValue);
+        double frequency = calculateFrequency(array[Math.max(current, 0)], maxValue);
 
         // Play sound based on the calculated frequency
         int note = (int) (69 + 12 * Math.log(frequency / 440.0) / Math.log(2)); // Convert frequency to MIDI note
