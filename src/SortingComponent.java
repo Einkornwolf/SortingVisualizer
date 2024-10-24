@@ -103,7 +103,14 @@ public class SortingComponent extends JComponent {
                 maxValue = value;
             }
         }
-        double frequency = calculateFrequency(array[Math.max(current, 0)], maxValue);
+        
+        double frequency = 0;
+        
+        try {
+        	frequency = calculateFrequency(array[Math.max(current, 0)], maxValue);
+        } catch(Exception e) {
+        	
+        }
 
         // Play sound based on the calculated frequency
         int note = (int) (69 + 12 * Math.log(frequency / 440.0) / Math.log(2)); // Convert frequency to MIDI note

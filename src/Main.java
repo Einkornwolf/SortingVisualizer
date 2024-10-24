@@ -1,5 +1,7 @@
 // Main.java
 import javax.swing.*;
+import javax.swing.UIManager.LookAndFeelInfo;
+
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -11,7 +13,7 @@ public class Main {
     public static void main(String[] args) {
 
         AtomicReference<Thread> sorterThread = new AtomicReference<>();
-
+        
         JFrame frame = new JFrame();
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -86,6 +88,7 @@ public class Main {
         jSlider2.setPaintTrack(true);
         jSlider2.setPaintTicks(true);
         jSlider2.setPaintLabels(true);
+        jSlider2.setFocusable(false);
 
         // set spacing
         jSlider2.setMajorTickSpacing(250);
@@ -314,7 +317,7 @@ public class Main {
         frame.setTitle("Sorting Algorithm Visualizer");
         frame.getContentPane().setBackground(Color.BLACK);
 
-        frame.add(controlPanel, BorderLayout.SOUTH);
+        frame.add(controlPanel, BorderLayout.NORTH);
         controlPanel.add(startButton);
         controlPanel.add(stopSortButton);
         controlPanel.add(selector);
