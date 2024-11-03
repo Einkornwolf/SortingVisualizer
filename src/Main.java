@@ -1,5 +1,6 @@
 // Main.java
 import javax.swing.*;
+
 import javax.swing.UIManager.LookAndFeelInfo;
 
 import java.awt.*;
@@ -61,6 +62,7 @@ public class Main {
         selector.addItem("Strand Sort");
         selector.addItem("Bitonic Sort");
         selector.addItem("Pancake Sort");
+        selector.addItem("Tim Sort");
 
         selector.setBackground(Color.BLACK);
         selector.setForeground(Color.WHITE);
@@ -295,6 +297,9 @@ public class Main {
                      case "Pancake Sort":
                          pancakeSort(array[0], sortingComponent);
                          break;
+                     case "Tim Sort":
+                    	 timSort(array[0], sortingComponent);
+                    	 break;
                  }
 
                  //Go through the array and play the notes
@@ -332,7 +337,47 @@ public class Main {
         frame.setVisible(true);
     }
 
-    private static void pancakeSort(int[] array, SortingComponent sortingComponent) {
+
+		//Implement Tim Sort
+
+private static void timSort(int[] array, SortingComponent sortingComponent) {
+    int RUN = 32;
+    int n = array.length;
+
+    // Sort individual subarrays of size RUN
+    for (int i = 0; i < n; i += RUN) {
+        insertionSort(array, i, Math.min((i + 31), (n - 1)), sortingComponent);
+    }
+
+    // Merge subarrays in a bottom-up manner
+    for (int size = RUN; size < n; size = 2 * size) {
+        for (int left = 0; left < n; left += 2 * size) {
+            int mid = left + size - 1;
+            int right = Math.min((left + 2 * size - 1), (n - 1));
+            merge(array, left, mid, right, sortingComponent);
+        }
+    }
+}
+
+private static void insertionSort(int[] array, int left, int right, SortingComponent sortingComponent) {
+    for (int i = left + 1; i <= right; i++) {
+        int temp = array[i];
+        int j = i - 1;
+        while (j >= left && array[j] > temp) {
+            array[j + 1] = array[j];
+            j--;
+            if (sortingComponent.sorterThread.get().isInterrupted()) return;
+            sortingComponent.updateComponents(array, j);
+        }
+        array[j + 1] = temp;
+        if (sortingComponent.sorterThread.get().isInterrupted()) return;
+        sortingComponent.updateComponents(array, j + 1);
+    }
+}
+
+	
+
+	private static void pancakeSort(int[] array, SortingComponent sortingComponent) {
         for (int i = array.length; i > 1; i--) {
             int maxIndex = findMax(array, i);
             if (maxIndex != i - 1) {
@@ -767,7 +812,6 @@ public class Main {
             array[i] = temp;
             if(sortingComponent.sorterThread.get().isInterrupted()) return;
             sortingComponent.updateComponents(array, i);
-
         }
     }
 
